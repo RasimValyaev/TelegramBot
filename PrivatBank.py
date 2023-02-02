@@ -1,19 +1,16 @@
 import os
-import numpy as np
 import sys
 import requests
 import datetime
 import pandas as pd
 from datetime import timedelta
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "\Config")
-
 # *********** импортируем данные для подключения к базам
 scriptpath = r"d:\Prestige\Python\Config"
 sys.path.append(os.path.abspath(scriptpath))
 from configPrestige import con_postgres_psycopg2, dict_to_sql_unqkey, read_sql_to_dataframe, change_data_in_table_bl, \
     engine, sql_to_dataframe, json_to_dataframe, send_sms
-from error_log import add_to_log
+
 
 conpg = con_postgres_psycopg2()
 conpg.autocommit = True
@@ -152,7 +149,7 @@ def parse_json_and_add_to_base(json_data):
             add_to_log(msj)
 
 
-def data_authorization_bank():
+def data_authorization_bank(telegram_chatid):
     # данные для авторизации банка
     df = ''
     try:
@@ -161,12 +158,11 @@ def data_authorization_bank():
           FROM t_telegram_policy as tp
             LEFT JOIN t_authorize as ta
                 ON tp.idfop = ta.id
-          WHERE ta.ids is not null 
-            and ta.ids != ''
-            and ta.id != 4
+          WHERE tp.idchat = %s
+            and ta.id <> 4
           ORDER BY ta.isim desc
           ;
-        '''
+        ''' % telegram_chatid
 
         sql_query = pd.read_sql_query(str_sql, conpg)
         df = pd.DataFrame(sql_query)
@@ -214,30 +210,32 @@ def convert_df(df_source):
 
 def create_sms(df):
     sms = ''
-    last_date = datetime.datetime.now().strftime("%m.%d.%Y %H:%M:%S")
     for row in df.itertuples():
         firm_name = row.firm_name
         currency = row.currency
-        balanceOutEq = str(row.balanceOutEq)
+        balanceOutEq = str("{:.2f}".format(row.balanceOutEq))
         if row.balanceOutEq < 0:
             balanceOutEq += ' (EKSI)'
 
         sms += "\n%s\n%s\n%s\n" % (firm_name, currency, balanceOutEq)
 
-    return "%s\n" % last_date + sms
+    return sms
 
 
-if __name__ == "__main__":
+def main_privatbank(telegram_chatid):
     # Банк. dataframe с данными для авторизации
-    data_authorization_bank_df = data_authorization_bank()
+    data_authorization_bank_df = data_authorization_bank(telegram_chatid)
 
     # Банк р/с, авторизуемся и заносим данные в базу
     df = firms_cycle_add_to_base(data_authorization_bank_df)
     df = convert_df(df)
-    sms = create_sms(df)
-    send_sms(sms)
+    return create_sms(df)
 
     if conpg:
         conpg.close()
 
     print('OK')
+
+
+if __name__ == "__main__":
+    main_privatbank(490323168)
