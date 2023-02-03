@@ -10,7 +10,7 @@ scriptpath = r"d:\Prestige\Python\Config"
 sys.path.append(os.path.abspath(scriptpath))
 from configPrestige import con_postgres_psycopg2, dict_to_sql_unqkey, read_sql_to_dataframe, change_data_in_table_bl, \
     engine, sql_to_dataframe, json_to_dataframe, send_sms
-
+from error_log import add_to_log
 
 conpg = con_postgres_psycopg2()
 conpg.autocommit = True
@@ -151,7 +151,7 @@ def parse_json_and_add_to_base(json_data):
 
 def data_authorization_bank(telegram_chatid):
     # данные для авторизации банка
-    df = ''
+    df = pd.DataFrame()
     try:
         str_sql = '''
           SELECT ids, tokens, ta.isim 
@@ -164,8 +164,7 @@ def data_authorization_bank(telegram_chatid):
           ;
         ''' % telegram_chatid
 
-        sql_query = pd.read_sql_query(str_sql, conpg)
-        df = pd.DataFrame(sql_query)
+        df = pd.read_sql_query(str_sql, conpg)
         return df
 
     except Exception as e:
@@ -197,14 +196,22 @@ def firms_cycle_add_to_base(df):
 
 
 def convert_df(df_source):
-    df = pd.DataFrame(df_source, columns=['firm_name', 'currency', 'acc', 'dpd', 'balanceOutEq']).sort_values(
-        ['firm_name', 'currency'], ascending=False)
-    df = df.reset_index(drop=True)
-    df['dpd'] = pd.to_datetime(df['dpd'], format='%d.%m.%Y %H:%M:%S')
-    df = df.astype({'balanceOutEq': float})
-    df = df[df['balanceOutEq'] != 0]
-    df = df.loc[df.groupby(['firm_name', 'currency', 'acc'])['dpd'].idxmax()].reset_index(drop=True)
-    df = df.groupby(['firm_name', 'currency'], as_index=False)['balanceOutEq'].sum()
+    df = pd.DataFrame()
+    try:
+        df = pd.DataFrame(df_source, columns=['firm_name', 'currency', 'acc', 'dpd', 'balanceOutEq']).sort_values(
+            ['firm_name', 'currency'], ascending=False)
+        df = df.reset_index(drop=True)
+        df['dpd'] = pd.to_datetime(df['dpd'], format='%d.%m.%Y %H:%M:%S')
+        df = df.astype({'balanceOutEq': float})
+        df = df[df['balanceOutEq'] != 0]
+        df = df.loc[df.groupby(['firm_name', 'currency', 'acc'])['dpd'].idxmax()].reset_index(drop=True)
+        df = df.groupby(['firm_name', 'currency'], as_index=False)['balanceOutEq'].sum()
+
+    except Exception as e:
+        msg = "ERROR: convert_df %s" % e
+        print(msg)
+        add_to_log(msg)
+
     return df
 
 

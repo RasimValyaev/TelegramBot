@@ -12,7 +12,7 @@ from configPrestige import engine, con_postgres_psycopg2
 conpg = con_postgres_psycopg2()
 
 
-def query():
+def sql_rest_of_cash():
     return '''
         SELECT currency, kasa, (sum(amount_receipt) + sum(amount_expense)) AS amount
         FROM public.v_one_cach
@@ -27,6 +27,17 @@ def query():
         ORDER BY currency, kasa;    
     '''
 
+
+def get_sql(field, table_name, date):
+    return '''
+        SELECT %s
+        FROM %s
+        WHERE doc_date = %s
+    ''' % (field, table_name, date)
+
+def get_cash_expenses(date):
+    sql = get_sql('currency', 'public.v_one_cach', date)
+    currencydf = pd.read_sql(sql, conpg)
 
 def create_sms(df):
     sms = ''
@@ -43,7 +54,7 @@ def create_sms(df):
 
 
 def main_one_c():
-    sql = query()
+    sql = sql_rest_of_cash()
     df = pd.read_sql(sql, conpg)
     sms = create_sms(df)
     return sms
