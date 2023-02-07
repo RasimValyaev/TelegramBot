@@ -3,8 +3,6 @@
 # https://github.com/noXplode/aiogram_calendar/blob/master/example_bot.py
 # Не забывайте своевременно обновлять библиотеку командой: python.exe -m pip install aiogram -U
 import datetime
-import os
-import sys
 import subprocess
 import logging
 import asyncio
@@ -17,10 +15,8 @@ from aiogram.dispatcher.filters import Text
 from OneC import main_one_c
 from PrivatBank import main_privatbank
 from UserValidate import main_user_validate, add_to_database as save_message
-
-scriptpath = r"d:\Prestige\Python\Config"
-sys.path.append(os.path.abspath(scriptpath))
 from configPrestige import TELEGRAM_TOKEN
+from error_log import add_to_log
 
 idmenu = 0
 bot = Bot(token=TELEGRAM_TOKEN)
@@ -42,29 +38,29 @@ async def process_start_command(message: types.Message):
     await message.reply("Only for registered users!\n\nТільки для зареєстрованих  користувачів!",
                         reply_markup=start_kb)
 
+#
+# @dp.callback_query_handler(text_contains='menu_')
+# async def menu(call: types.CallbackQuery):
+#     global idmenu
+#     if call.data and call.data.startswith("menu_"):
+#         code = call.data[-1:]
+#         idmenu = code
+#         if code.isdigit():
+#             code = int(code)
+#             idmenu = code
+#
+#         if code == 1:
+#             await echo(call.message)
+#             # await call.message.edit_text('Нажата кнопка остатки', reply_markup=keyboard)
+#             await call.message.delete()
+#         # if code == 2:
+#         #     await call.message.edit_text('Нажата кнопка Программы', reply_markup=keyboard)
+#         else:
+#             # await bot.answer_callback_query(call.id)
+#             await bot.send_message(call.id, "ERROR", reply_markup=start_kb)
+#
 
-@dp.callback_query_handler(text_contains='menu_')
-async def menu(call: types.CallbackQuery):
-    global idmenu
-    if call.data and call.data.startswith("menu_"):
-        code = call.data[-1:]
-        idmenu = code
-        if code.isdigit():
-            code = int(code)
-            idmenu = code
-
-        if code == 1:
-            await echo(call.message)
-            # await call.message.edit_text('Нажата кнопка остатки', reply_markup=keyboard)
-            await call.message.delete()
-        # if code == 2:
-        #     await call.message.edit_text('Нажата кнопка Программы', reply_markup=keyboard)
-        else:
-            # await bot.answer_callback_query(call.id)
-            await bot.send_message(call.id, "ERROR", reply_markup=start_kb)
-
-
-@dp.message_handler(Text(equals=['kasa'], ignore_case=True))
+@dp.message_handler(Text(equals=['kalan'], ignore_case=True))
 async def nav_cal_handler(message: Message):
     global idmenu
     idmenu = 1
@@ -98,10 +94,10 @@ async def get_sms(msg: types.Message):
         if msg.text not in start_kb.keyboard[0]:
             sms = "ERROR"
         elif msg.text == 'kalan':
-                await msg.answer("Lütfen bekleyin!\nBiraz zaman alacak!", reply_markup=start_kb)
-                file = r"d:\Prestige\Python\Prestige\Outher\update_prestige_cash.bat"
-                # result = subprocess.Popen(file)
-                # if result.wait() == 0:
+            await msg.answer("Lütfen bekleyin!\nBiraz zaman alacak!", reply_markup=start_kb)
+            file = r"d:\Prestige\Python\Prestige\Outher\update_prestige_cash.bat"
+            result = subprocess.Popen(file)
+            if result.wait() == 0:
                 sms = "%s\n\n**********banka**********\n" % last_date
                 sms += main_privatbank(msg.chat.id)
                 sms += "\n\n**********1C**********\n"
@@ -119,7 +115,7 @@ async def get_sms(msg: types.Message):
 
 @dp.message_handler()
 async def echo(msg: types.Message):
-    get_sms()
+    await get_sms(msg)
 
 
 @dp.message_handler()

@@ -1,15 +1,8 @@
 # check, is validate user in the telegram_bot
 
-import os
-import sys
 import traceback
 import pandas as pd
-import pandas.io.sql as psql
-
-# *********** импортируем данные для подключения к базам
-scriptpath = r"d:\Prestige\Python\Config"
-sys.path.append(os.path.abspath(scriptpath))
-from configPrestige import con_postgres_psycopg2, engine
+from authorize import con_postgres_psycopg2
 from error_log import add_to_log
 
 conpg = con_postgres_psycopg2()
@@ -65,7 +58,7 @@ def add_to_database(chatid, username, text, timestamp):
 
 def create_sql_code():
     return '''
-        INSERT INTO public.t_telegram(
+        INSERT INTO t_telegram(
             chat_id,
             username,
             msj,

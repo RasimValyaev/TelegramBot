@@ -1,0 +1,12 @@
+# created by virtualenv automatically
+*
+/include
+/Lib
+/Prestige
+/Scripts
+/.idea
+*.xml
+*.meta
+*.zip
+*.iml
+Outher/PrestigeMaliyetOnline.xlsb

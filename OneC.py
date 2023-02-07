@@ -7,7 +7,7 @@ import pandas as pd
 # *********** импортируем данные для подключения к базам
 scriptpath = r"d:\Prestige\Python\Config"
 sys.path.append(os.path.abspath(scriptpath))
-from configPrestige import engine, con_postgres_psycopg2
+from authorize import con_postgres_psycopg2
 
 conpg = con_postgres_psycopg2()
 
@@ -15,11 +15,11 @@ conpg = con_postgres_psycopg2()
 def sql_rest_of_cash():
     return '''
         SELECT currency, kasa, (sum(amount_receipt) + sum(amount_expense)) AS amount
-        FROM public.v_one_cach
+        FROM v_one_cach
         WHERE bank_account_cashier_key IN 
             (SELECT DISTINCT 
                 bank_account_cashier_key
-            FROM public.v_one_cach
+            FROM v_one_cach
             WHERE (doc_date >= '2022-01-01') 
                 AND (type_of_cash = 'Наличные')
             GROUP BY bank_account_cashier_key)
@@ -28,16 +28,40 @@ def sql_rest_of_cash():
     '''
 
 
-def get_sql(field, table_name, date):
+def get_sql(field, table_name, parameter):
     return '''
         SELECT %s
         FROM %s
-        WHERE doc_date = %s
-    ''' % (field, table_name, date)
+        WHERE %s
+        ORDER BY %s
+    ''' % (field, table_name, parameter, field)
+
+
+def get_currencies(prm):
+    field = "currency"
+    parameter = "doc_date = '%s'" % prm
+    table_name = 'v_one_cach'
+    sql = get_sql(field, table_name, parameter)
+    return sql
 
 def get_cash_expenses(date):
-    sql = get_sql('currency', 'public.v_one_cach', date)
-    currencydf = pd.read_sql(sql, conpg)
+    field = "currency"
+    parameter = "doc_date = '%s'" % date
+    table_name = 'v_one_cach'
+    sql = get_sql(field, table_name, parameter)
+    currencies = pd.read_sql(sql, conpg)
+
+    for currency in currencies.itertuples():
+        field = "kasa"
+        parameter += " AND currency = '%s'" % currency
+        sql = get_sql(field, table_name, parameter)
+        cash_boxs = pd.read_sql(sql, conpg)
+        for cash_box in cash_boxs.itertuples():
+            field = "concat(client,': ', a_comment)"
+            parameter += " AND kasa = '%s'" % cash_box
+            sql = get_sql(field, table_name, parameter)
+            cash_boxs = pd.read_sql(sql, conpg)
+
 
 def create_sms(df):
     sms = ''
