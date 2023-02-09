@@ -2,6 +2,13 @@
 # https://mastergroosha.github.io/aiogram-3-guide/
 # https://github.com/noXplode/aiogram_calendar/blob/master/example_bot.py
 # Не забывайте своевременно обновлять библиотеку командой: python.exe -m pip install aiogram -U
+import os
+import sys
+scriptpath = r"D:\Prestige\Python\Config"
+sys.path.append(os.path.abspath(scriptpath))
+scriptpath = r"d:\Prestige\Python\Prestige"
+sys.path.append(os.path.abspath(scriptpath))
+
 import datetime
 import subprocess
 import logging
@@ -35,6 +42,7 @@ from Catalog.catCashBankAccounts import main_cat_cash_bank_accounts
 from Catalog.catCashClause import main_cat_cash_clause
 from Catalog.catCounterparties import main_cat_counterparties
 from Catalog.catCurrency import main_cat_currencies
+
 from views_pg import main_create_views
 
 idmenu = 0
@@ -99,7 +107,6 @@ async def process_simple_calendar(callback_query: CallbackQuery, callback_data: 
         )
 
 
-@dp.message_handler()
 async def get_sms(msg: types.Message):
     global idmenu
     sms = ''
@@ -117,8 +124,9 @@ async def get_sms(msg: types.Message):
             await msg.answer("Lütfen bekleyin!\nBiraz zaman alacak!", reply_markup=start_kb)
             # file = r"d:\Prestige\Python\Prestige\Outher\update_prestige_cash.bat"
             # result = subprocess.Popen(file)
-            # await load_data_from_1c()
+            await load_data_from_1c()
             # if result.wait() == 0:
+            main_create_views()
             sms = "%s\n\n**********banka**********\n" % last_date
             sms += main_privatbank(msg.chat.id)
             sms += "\n\n**********1C**********\n"
@@ -145,6 +153,7 @@ async def echo_message(msg: types.Message):
 
 
 async def load_data_from_1c():
+
     main_doc_cash_acc_reg_recordtype()
     main_doc_cash_correction_of_register()
     main_doc_money_check()
