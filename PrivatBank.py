@@ -158,8 +158,7 @@ def data_authorization_bank(telegram_chatid):
           ORDER BY ta.isim desc
           ;
         ''' % telegram_chatid
-
-        df = pd.read_sql_query(str_sql, conpg)
+        df = pd.read_sql_query(str_sql, con_postgres_psycopg2())
         return df
 
     except Exception as e:
@@ -232,7 +231,6 @@ def main_privatbank(telegram_chatid):
     # Банк р/с, авторизуемся и заносим данные в базу
     df = firms_cycle_add_to_base(data_authorization_bank_df)
     df = convert_df(df)
-
     return create_sms(df)
 
 

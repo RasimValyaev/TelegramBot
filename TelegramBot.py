@@ -10,6 +10,7 @@ scriptpath = r"d:\Prestige\Python\Prestige"
 sys.path.append(os.path.abspath(scriptpath))
 
 import datetime
+import warnings
 import subprocess
 import logging
 import asyncio
@@ -23,29 +24,11 @@ from OneC import main_one_c
 from PrivatBank import main_privatbank
 from UserValidate import main_user_validate, add_to_database as save_message
 from configPrestige import TELEGRAM_TOKEN
-from Cash.docCashAccRegRecordtype import main_doc_cash_acc_reg_recordtype
-from Cash.docCashCorrectionOfRegister import main_doc_cash_correction_of_register
-from Cash.docCashMoneyCheck import main_doc_money_check
-from Cash.docCashPaymentOrderExpenseDetails import main_doc_cash_order_expense_details
-from Cash.docCashPaymentOrderReceiptDetails import main_doc_cash_order_receipt_details
-from Cash.docCashPaymentOrderWithdrawalOfFunds import main_doc_cash_payment_order_withdrawal_of_funds
-from Cash.docCashPaymentOrderWithdrawalOfFundsDetails import main_doc_cash_payment_order_withdrawal_of_funds_details
-from Cash.docCashWarrantExpenseDetails import main_doc_cash_warrant_expense_details
-from Cash.docCashWarrantReceiptDetails import main_doc_cash_warrant_receipt_details
-from Cash.docCashWarrantReceipt import main_doc_cash_warrant_receipt
-from Cash.docCashWarrantExpense import main_doc_cash_warrant_expense
-from Cash.docCashMovement import main_doc_cash_movement
-from Cash.docCashPaymentOrderReceipt import main_doc_cash_order_receipt
-from Cash.docCashPaymentOrderExpense import main_doc_cash_order_expense
-from Catalog.catBanks import main_cat_banks
-from Catalog.catCashBankAccounts import main_cat_cash_bank_accounts
-from Catalog.catCashClause import main_cat_cash_clause
-from Catalog.catCounterparties import main_cat_counterparties
-from Catalog.catCurrency import main_cat_currencies
-
 from views_pg import main_create_views
 
+
 idmenu = 0
+warnings.filterwarnings('ignore')
 bot = Bot(token=TELEGRAM_TOKEN)
 dp = Dispatcher(bot)
 
@@ -106,7 +89,7 @@ async def process_simple_calendar(callback_query: CallbackQuery, callback_data: 
             reply_markup=start_kb
         )
 
-
+@dp.message_handler()
 async def get_sms(msg: types.Message):
     global idmenu
     sms = ''
@@ -122,15 +105,14 @@ async def get_sms(msg: types.Message):
             sms = "ERROR"
         elif msg.text == 'kalan':
             await msg.answer("Lütfen bekleyin!\nBiraz zaman alacak!", reply_markup=start_kb)
-            # file = r"d:\Prestige\Python\Prestige\Outher\update_prestige_cash.bat"
-            # result = subprocess.Popen(file)
-            await load_data_from_1c()
-            # if result.wait() == 0:
-            main_create_views()
-            sms = "%s\n\n**********banka**********\n" % last_date
-            sms += main_privatbank(msg.chat.id)
-            sms += "\n\n**********1C**********\n"
-            sms += main_one_c()
+            file = r"d:\Prestige\Python\TelegramBot\Bat\update_prestige_cash.bat"
+            result = subprocess.Popen(file)
+            if result.wait() == 0:
+                main_create_views()
+                sms = "%s\n\n**********banka**********\n" % last_date
+                sms += main_privatbank()
+                sms += "\n\n**********1C**********\n"
+                sms += main_one_c()
         elif msg.text == 'gider':
             sms = 'Hizmet şu anda mevcut değil!'
 
@@ -152,28 +134,6 @@ async def echo_message(msg: types.Message):
     await bot.send_message(msg.from_user.id, msg.text)
 
 
-async def load_data_from_1c():
-
-    main_doc_cash_acc_reg_recordtype()
-    main_doc_cash_correction_of_register()
-    main_doc_money_check()
-    main_doc_cash_order_expense_details()
-    main_doc_cash_order_receipt_details()
-    main_doc_cash_payment_order_withdrawal_of_funds()
-    main_doc_cash_payment_order_withdrawal_of_funds_details()
-    main_doc_cash_warrant_expense_details()
-    main_doc_cash_warrant_receipt_details()
-    main_doc_cash_warrant_receipt()
-    main_doc_cash_warrant_expense()
-    main_doc_cash_movement()
-    main_doc_cash_order_receipt()
-    main_doc_cash_order_expense()
-    main_cat_banks()
-    main_cat_cash_bank_accounts()
-    main_cat_cash_clause()
-    main_cat_counterparties()
-    main_cat_currencies()
-    main_create_views()
 
 
 # Запуск процесса поллинга новых апдейтов
