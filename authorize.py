@@ -119,8 +119,9 @@ def con_postgres_psycopg2():
     conpg = ''
 
     try:
-        conpg = psycopg2.connect(dbname=basename, user=username, password=psw, host=hostname, port=port,
-                                 options="-c search_path=public")
+        # conpg = psycopg2.connect(dbname=basename, user=username, password=psw, host=hostname, port=port,
+        #                          options="-c search_path=public")
+        conpg = psycopg2.connect(dbname=basename, user=username, password=psw, host=hostname, port=port)
 
     except Exception as e:
         sms = "ERROR:con_postgres_psycopg2: %s" % e

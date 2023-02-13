@@ -5,10 +5,9 @@ import pandas as pd
 from authorize import con_postgres_psycopg2
 from error_log import add_to_log
 
-conpg = con_postgres_psycopg2()
-
 
 def user_policy(telegram_chatid):
+    conpg = con_postgres_psycopg2()
     df = pd.DataFrame()
     try:
         query = '''
@@ -34,6 +33,7 @@ def main_user_validate(telegram_chatid):
 
 
 def add_to_database(chatid, username, text, timestamp):
+    conpg = con_postgres_psycopg2()
     query = create_sql_code()
     odata = (chatid, username, text, timestamp)
     result = ''
@@ -70,7 +70,7 @@ def create_sql_code():
 
 if __name__ == "__main__":
     main_user_validate(490323161)
-    if conpg:
-        conpg.close()
+    # if conpg:
+    #     conpg.close()
 
     print('OK')

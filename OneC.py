@@ -1,5 +1,5 @@
 # loading cash amount from the database
-
+import datetime
 import os
 import sys
 import pandas as pd
@@ -28,9 +28,9 @@ def sql_rest_of_cash():
     '''
 
 
-def get_sql(field, table_name, parameter):
+def create_sql_universal(field, table_name, parameter):
     return '''
-        SELECT %s
+        SELECT DISTINCT %s
         FROM %s
         WHERE %s
         ORDER BY %s
@@ -38,32 +38,54 @@ def get_sql(field, table_name, parameter):
 
 
 def get_currencies(prm):
+    # create sql of type currency
     field = "currency"
     parameter = "doc_date = '%s'" % prm
     table_name = 'v_one_cach'
-    sql = get_sql(field, table_name, parameter)
+    sql = create_sql_universal(field, table_name, parameter)
     return sql
 
+
 def get_cash_expenses(date):
+    sms = ''
+    parameter_kasa = ''
+    parameter_description = ''
     field = "currency"
-    parameter = "doc_date = '%s'" % date
+    parameter_currency = "doc_date = '%s'" % date
     table_name = 'v_one_cach'
-    sql = get_sql(field, table_name, parameter)
+    sql = create_sql_universal(field, table_name, parameter_currency)
     currencies = pd.read_sql(sql, conpg)
-
-    for currency in currencies.itertuples():
+    for idcurrency, currency in currencies.itertuples():
         field = "kasa"
-        parameter += " AND currency = '%s'" % currency
-        sql = get_sql(field, table_name, parameter)
+        parameter_kasa = "%s AND currency = '%s'" % (parameter_currency, currency)
+        sql = create_sql_universal(field, table_name, parameter_kasa)
         cash_boxs = pd.read_sql(sql, conpg)
-        for cash_box in cash_boxs.itertuples():
-            field = "concat(client,': ', a_comment)"
-            parameter += " AND kasa = '%s'" % cash_box
-            sql = get_sql(field, table_name, parameter)
-            cash_boxs = pd.read_sql(sql, conpg)
+        for id_cash_box, cash_box in cash_boxs.itertuples():
+            field = "concat(client,': ', a_comment)" \
+                    ", sum(amount_receipt + amount_expense) OVER (PARTITION BY currency, concat(client,': ', a_comment))"
+            parameter_description = "%s AND kasa = '%s'" % (parameter_kasa, cash_box)
+            sql = create_sql_universal(field, table_name, parameter_description)
+            df = pd.read_sql(sql, conpg)
+            sms_cur = create_sms_movement(df)
+            sms += '\n\n***** %s *****%s' % (cash_box, sms_cur)
+            pass
+        sms = currency + '\n' + sms
+
+    date = datetime.datetime.strftime(datetime.datetime.now(),"%d.%m.%Y %H:%M:%S")
+    sms = date + sms
+    return sms
 
 
-def create_sms(df):
+def create_sms_movement(df, sms=''):
+    for row in df.itertuples():
+        firm_name = row[1]
+        amount = str("{:.2f}".format(row[2]))
+        sms += "\n%s\n%s\n" % (firm_name, amount)
+
+    return sms
+
+
+def create_sms_rest(df):
     sms = ''
     for row in df.itertuples():
         firm_name = row.kasa
@@ -77,12 +99,15 @@ def create_sms(df):
     return sms
 
 
-def main_one_c():
+def main_one_c_cash_rest():
+    # 1С - rest cash in 1C
+    conpg = con_postgres_psycopg2()
     sql = sql_rest_of_cash()
     df = pd.read_sql(sql, conpg)
-    sms = create_sms(df)
+    sms = create_sms_rest(df)
     return sms
 
 
 if __name__ == '__main__':
-    main_one_c()
+    # main_one_c_cash_rest()
+    get_cash_expenses('01.02.2023')

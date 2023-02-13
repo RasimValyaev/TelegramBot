@@ -4,6 +4,7 @@
 # Не забывайте своевременно обновлять библиотеку командой: python.exe -m pip install aiogram -U
 import os
 import sys
+
 scriptpath = r"D:\Prestige\Python\Config"
 sys.path.append(os.path.abspath(scriptpath))
 scriptpath = r"d:\Prestige\Python\Prestige"
@@ -20,12 +21,14 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.dispatcher import Dispatcher
 from aiogram_calendar import simple_cal_callback, SimpleCalendar, dialog_cal_callback, DialogCalendar
 from aiogram.dispatcher.filters import Text
-from OneC import main_one_c
+from OneC import main_one_c_cash_rest, get_cash_expenses
 from PrivatBank import main_privatbank
 from UserValidate import main_user_validate, add_to_database as save_message
 from configPrestige import TELEGRAM_TOKEN
+from authorize import con_postgres_psycopg2
 from views_pg import main_create_views
 
+conpg = con_postgres_psycopg2()
 
 idmenu = 0
 warnings.filterwarnings('ignore')
@@ -110,11 +113,16 @@ async def get_sms(msg: types.Message):
             if result.wait() == 0:
                 main_create_views()
                 sms = "%s\n\n**********banka**********\n" % last_date
-                sms += main_privatbank()
+                print(sms, datetime.datetime.now())
+                sms += main_privatbank(msg.chat.id)
+                print(sms, datetime.datetime.now())
                 sms += "\n\n**********1C**********\n"
-                sms += main_one_c()
+                print(sms, datetime.datetime.now())
+                sms += main_one_c_cash_rest()
+                print(sms, datetime.datetime.now())
         elif msg.text == 'gider':
-            sms = 'Hizmet şu anda mevcut değil!'
+            date = datetime.datetime.strftime(datetime.datetime.now(),"%d.%m.%Y")
+            sms = get_cash_expenses(date)
 
     save_message(msg.chat.id, msg.chat.username, save_to_base, msg.date)
     await msg.answer(sms, reply_markup=start_kb)

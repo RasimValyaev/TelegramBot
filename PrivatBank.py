@@ -3,13 +3,9 @@ import requests
 import datetime
 import pandas as pd
 from datetime import timedelta
-from authorize import con_postgres_psycopg2, json_to_dataframe
+from authorize import json_to_dataframe, con_postgres_psycopg2
 from configPrestige import dict_to_sql_unqkey
 from error_log import add_to_log
-
-conpg = con_postgres_psycopg2()
-conpg.autocommit = True
-conpg.set_client_encoding('UNICODE')
 
 dataOt = (datetime.date.today() - timedelta(days=60)).strftime("%d-%m-%Y")
 # dataOt = '01-01-2023'
@@ -236,4 +232,8 @@ def main_privatbank(telegram_chatid):
 
 
 if __name__ == "__main__":
-    main_privatbank(490323168)
+    conpg = con_postgres_psycopg2()
+    sms = main_privatbank(490323168, conpg)
+    print(sms)
+    if conpg:
+        conpg.close()
