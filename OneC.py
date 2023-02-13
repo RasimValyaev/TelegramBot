@@ -32,7 +32,7 @@ def create_sql_universal(field, table_name, parameter):
     return '''
         SELECT DISTINCT %s
         FROM %s
-        WHERE %s
+        WHERE (type_of_cash = 'Наличные') AND %s
         ORDER BY %s
     ''' % (field, table_name, parameter, field)
 
@@ -48,8 +48,6 @@ def get_currencies(prm):
 
 def get_cash_expenses(date):
     sms = ''
-    parameter_kasa = ''
-    parameter_description = ''
     field = "currency"
     parameter_currency = "doc_date = '%s'" % date
     table_name = 'v_one_cach'
@@ -66,13 +64,12 @@ def get_cash_expenses(date):
             parameter_description = "%s AND kasa = '%s'" % (parameter_kasa, cash_box)
             sql = create_sql_universal(field, table_name, parameter_description)
             df = pd.read_sql(sql, conpg)
-            sms_cur = create_sms_movement(df)
-            sms += '\n\n***** %s *****%s' % (cash_box, sms_cur)
-            pass
-        sms = currency + '\n' + sms
+            sms_current = create_sms_movement(df)
+            sms += '\n\n***** %s *****%s' % (cash_box, sms_current)
+        # sms = currency + '\n' + sms
 
-    date = datetime.datetime.strftime(datetime.datetime.now(),"%d.%m.%Y %H:%M:%S")
-    sms = date + sms
+    # date = datetime.datetime.strftime(datetime.datetime.now(),"%d.%m.%Y %H:%M:%S")
+    # sms = date + "\n"+ sms
     return sms
 
 

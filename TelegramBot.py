@@ -46,51 +46,60 @@ menu_2 = InlineKeyboardButton(text='hareket', callback_data="menu_2")
 keyboard.add(menu_1, menu_2)
 
 
+async def kalan(chatid, date):
+    # last_date = datetime.datetime.now().strftime("%m.%d.%Y %H:%M:%S")
+    await bot.send_message(chatid, "Lütfen bekleyin!\nBiraz zaman alacak!", reply_markup=start_kb)
+    file = r"d:\Prestige\Python\TelegramBot\Bat\update_prestige_cash.bat"
+    result = subprocess.Popen(file)
+    if result.wait() == 0:
+        main_create_views()
+        sms = "%s\n\n**********banka**********\n" % date
+        print(sms, datetime.datetime.now())
+        sms += main_privatbank(chatid)
+        print(sms, datetime.datetime.now())
+        sms += "\n\n**********1C**********\n"
+        print(sms, datetime.datetime.now())
+        sms += main_one_c_cash_rest()
+        print(sms, datetime.datetime.now())
+        return sms
+
+
+async def gider(date):
+    # date = datetime.datetime.strftime(datetime.datetime.now(), "%d.%m.%Y")
+    sms = get_cash_expenses(date)
+    return sms
+    # await bot.send_message(chatid, sms, reply_markup=start_kb)
+
+
 @dp.message_handler(commands=['start'])
 async def process_start_command(message: types.Message):
     await message.reply("Only for registered users!\n\nТільки для зареєстрованих  користувачів!",
                         reply_markup=start_kb)
 
 
-#
-# @dp.callback_query_handler(text_contains='menu_')
-# async def menu(call: types.CallbackQuery):
-#     global idmenu
-#     if call.data and call.data.startswith("menu_"):
-#         code = call.data[-1:]
-#         idmenu = code
-#         if code.isdigit():
-#             code = int(code)
-#             idmenu = code
-#
-#         if code == 1:
-#             await echo(call.message)
-#             # await call.message.edit_text('Нажата кнопка остатки', reply_markup=keyboard)
-#             await call.message.delete()
-#         # if code == 2:
-#         #     await call.message.edit_text('Нажата кнопка Программы', reply_markup=keyboard)
-#         else:
-#             # await bot.answer_callback_query(call.id)
-#             await bot.send_message(call.id, "ERROR", reply_markup=start_kb)
-#
-
 @dp.message_handler(Text(equals=['kalan'], ignore_case=True))
-async def nav_cal_handler(message: Message):
-    global idmenu
-    idmenu = 1
-    await get_sms(message)
-    # await message.answer("Please select a date: ", reply_markup=await SimpleCalendar().start_calendar())
+async def nav_cal_handler(msg: Message):
+    if user_validate(msg.chat.id):
+        await msg.answer("Kasa tarihini lutfen secin: ", reply_markup=await DialogCalendar().start_calendar())
+    else:
+        await msg.answer("Вы не зарегистрированы в системе!")
 
 
-# simple calendar usage
-@dp.callback_query_handler(simple_cal_callback.filter())
-async def process_simple_calendar(callback_query: CallbackQuery, callback_data: dict):
-    selected, date = await SimpleCalendar().process_selection(callback_query, callback_data)
-    if selected:
-        await callback_query.message.answer(
-            f'You selected {date.strftime("%d/%m/%Y")}',
-            reply_markup=start_kb
-        )
+@dp.message_handler(Text(equals=['gider'], ignore_case=True))
+async def simple_cal_handler(msg: Message):
+    if user_validate(msg.chat.id):
+        await msg.answer("Gider tarihini lutfen secin: ", reply_markup=await DialogCalendar().start_calendar())
+    else:
+        await msg.answer("Вы не зарегистрированы в системе!")
+
+
+async def user_validate(chatid):
+    df = main_user_validate(chatid)
+    if len(df) == 0:
+        return False
+    else:
+        return True
+
 
 @dp.message_handler()
 async def get_sms(msg: types.Message):
@@ -121,8 +130,11 @@ async def get_sms(msg: types.Message):
                 sms += main_one_c_cash_rest()
                 print(sms, datetime.datetime.now())
         elif msg.text == 'gider':
-            date = datetime.datetime.strftime(datetime.datetime.now(),"%d.%m.%Y")
-            sms = get_cash_expenses(date)
+            # date = datetime.datetime.strftime(datetime.datetime.now(), "%d.%m.%Y")
+            # sms = get_cash_expenses(date)
+            # date = await msg.answer("Lütfen tarihi secin: ", reply_markup=await DialogCalendar().start_calendar())
+            date = simple_cal_handler(msg)
+            print(date)
 
     save_message(msg.chat.id, msg.chat.username, save_to_base, msg.date)
     await msg.answer(sms, reply_markup=start_kb)
@@ -130,6 +142,22 @@ async def get_sms(msg: types.Message):
     if msg.chat.id != 490323168:
         sms = "Отправлено смс\n%s\n%s\n%s" % (msg.chat.id, msg.chat.username, sms)
         await bot.send_message(490323168, sms, reply_markup=start_kb)
+
+
+@dp.callback_query_handler(dialog_cal_callback.filter())
+async def process_dialog_calendar(callback_query: CallbackQuery, callback_data: dict):
+    selected, date = await DialogCalendar().process_selection(callback_query, callback_data)
+    if selected:
+        date = date.strftime("%d/%m/%Y")
+        chatid = callback_query.message.chat.id
+        msg_text = callback_query.message.text
+        if msg_text == 'Kasa tarihini lutfen secin:':
+            sms = await kalan(chatid, date)
+        if msg_text == 'Gider tarihini lutfen secin:':
+            sms = await gider(date)
+
+        sms = "***** %s \n%s\n" % (date, sms)
+        await callback_query.message.answer(sms, reply_markup=start_kb)
 
 
 @dp.message_handler()
@@ -140,8 +168,6 @@ async def echo(msg: types.Message):
 @dp.message_handler()
 async def echo_message(msg: types.Message):
     await bot.send_message(msg.from_user.id, msg.text)
-
-
 
 
 # Запуск процесса поллинга новых апдейтов
