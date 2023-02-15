@@ -51,26 +51,29 @@ def get_cash_expenses(date):
     field = "currency"
     parameter_currency = "doc_date = '%s'" % date
     table_name = 'v_one_cach'
-    sql = create_sql_universal(field, table_name, parameter_currency)
-    currencies = pd.read_sql(sql, conpg)
-    for idcurrency, currency in currencies.itertuples():
-        field = "kasa"
-        parameter_kasa = "%s AND currency = '%s'" % (parameter_currency, currency)
-        sql = create_sql_universal(field, table_name, parameter_kasa)
-        cash_boxs = pd.read_sql(sql, conpg)
-        for id_cash_box, cash_box in cash_boxs.itertuples():
-            field = "concat(client,': ', a_comment)" \
-                    ", sum(amount_receipt + amount_expense) OVER (PARTITION BY currency, concat(client,': ', a_comment))"
-            parameter_description = "%s AND kasa = '%s'" % (parameter_kasa, cash_box)
-            sql = create_sql_universal(field, table_name, parameter_description)
-            df = pd.read_sql(sql, conpg)
-            sms_current = create_sms_movement(df)
-            sms += '\n\n***** %s *****%s' % (cash_box, sms_current)
-        # sms = currency + '\n' + sms
+    try:
+        conpg = con_postgres_psycopg2()
+        sql = create_sql_universal(field, table_name, parameter_currency)
+        currencies = pd.read_sql(sql, conpg)
+        for idcurrency, currency in currencies.itertuples():
+            field = "kasa"
+            parameter_kasa = "%s AND currency = '%s'" % (parameter_currency, currency)
+            sql = create_sql_universal(field, table_name, parameter_kasa)
+            cash_boxs = pd.read_sql(sql, conpg)
+            for id_cash_box, cash_box in cash_boxs.itertuples():
+                field = "concat(client,': ', a_comment)" \
+                        ", sum(amount_receipt + amount_expense) OVER (PARTITION BY currency, concat(client,': ', a_comment))"
+                parameter_description = "%s AND kasa = '%s'" % (parameter_kasa, cash_box)
+                sql = create_sql_universal(field, table_name, parameter_description)
+                df = pd.read_sql(sql, conpg)
+                sms_current = create_sms_movement(df)
+                sms += '\n\n***** %s *****%s' % (cash_box, sms_current)
 
-    # date = datetime.datetime.strftime(datetime.datetime.now(),"%d.%m.%Y %H:%M:%S")
-    # sms = date + "\n"+ sms
-    return sms
+    except Exception as e:
+        print("ERROR: OneC. %s" % e)
+
+    finally:
+        return sms
 
 
 def create_sms_movement(df, sms=''):
