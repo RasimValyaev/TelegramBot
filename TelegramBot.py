@@ -57,7 +57,7 @@ async def user_validate(message):
         return True
 
 
-async def user_name(message:Message):
+async def user_name(message: Message):
     # get correct username
     if len(message.chat.full_name) == 0:
         username = message.chat.first_name + " " + message.chat.last_name + " (" + message.chat.username + ")"
@@ -79,7 +79,6 @@ async def save_message(chatid, message_text, username, date, in_out: bool):
 
 async def send_me(chatid, sms, in_out: bool):
     # in_out: True - message from user, False - message to user
-
     if in_out:
         sms += "musteriden\n%s\n%s" % (chatid, sms)
     else:
@@ -152,6 +151,9 @@ async def process_dialog_calendar(callback_query: CallbackQuery, callback_data: 
             sms = await gider(date)
 
         sms = "***** %s *****\n%s\n" % (date, sms)
+
+        print("sms", sms)
+
         return sms
 
 
