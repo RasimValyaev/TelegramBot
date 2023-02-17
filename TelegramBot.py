@@ -59,10 +59,10 @@ async def user_validate(message):
 
 async def user_name(message: Message):
     # get correct username
-    if len(message.chat.full_name) == 0:
-        username = message.chat.first_name + " " + message.chat.last_name + " (" + message.chat.username + ")"
+    if len(message.full_name) == 0:
+        username = message.first_name + " " + message.last_name + " (" + message.username + ")"
     else:
-        username = message.chat.username
+        username = message.username
 
     return username
 
@@ -96,50 +96,50 @@ async def gider(date):
 
 @dp.message_handler(commands=['start'])
 async def process_start_command(message: types.Message):
-    username = user_name(message)
+    username = user_name(message.chat)
     await save_message(message.chat.id, message.text, username, message.date, True)
     await send_me(message.chat.id, message.text, True)
 
-    await message.reply("Only for registered users!\n\nТільки для зареєстрованих  користувачів!",
+    await message.reply("Only for registered users!\n\nТільки для зареєстрованих користувачів!",
                         reply_markup=start_kb)
 
 
 @dp.message_handler(Text(equals=['kalan'], ignore_case=True))
 async def nav_cal_handler(message: Message):
-    username = await user_name(message)
+    username = await user_name(message.chat)
     await save_message(message.chat.id, message.text, username, message.date, True)
     await send_me(message.chat.id, message.text, True)
 
     if await user_validate(message):
-        sms = await kalan(message.chat.id, reply_markup=start_kb)
+        sms = await kalan(message.chat.id)
     else:
         sms = "Вы не зарегистрированы в системе!"
 
+    username = await user_name(message.chat)
     await save_message(message.chat.id, sms, username, message.date, False)
+    await bot.send_message(message.chat.id, sms, reply_markup=start_kb)
     await send_me(message.chat.id, sms, False)
+
 
 
 @dp.message_handler(Text(equals=['gider'], ignore_case=True))
 async def simple_cal_handler(message: Message):
-    username = await user_name(message)
+    username = await user_name(message.chat)
     await save_message(message.chat.id, message.text, username, message.date, True)
     await send_me(message.chat.id, message.text, True)
 
     if await user_validate(message):
-        sms = await message.answer("Gider tarihini lutfen secin: ",
+        await message.answer("Gider tarihini lutfen secin: ",
                                    reply_markup=await DialogCalendar().start_calendar())
     else:
         sms = "Вы не зарегистрированы в системе!"
         await message.answer(sms, reply_markup=start_kb)
 
-    await save_message(message.chat.id, sms, username, message.date, False)
-    await send_me(message.chat.id, sms, False)
 
 
 @dp.callback_query_handler(dialog_cal_callback.filter())
 async def process_dialog_calendar(callback_query: CallbackQuery, callback_data: dict):
     selected, date = await DialogCalendar().process_selection(callback_query, callback_data)
-
     if selected:
         date = date.strftime("%d/%m/%Y")
         chatid = callback_query.message.chat.id
@@ -154,29 +154,32 @@ async def process_dialog_calendar(callback_query: CallbackQuery, callback_data: 
 
         print("sms", sms)
 
-        return sms
+        username = await user_name(callback_query.message.chat)
+        await save_message(chatid, sms, username, date, False)
+        await bot.send_message(chatid, sms, reply_markup=start_kb)
+        await send_me(chatid, sms, False)
 
 
 async def kalan(chatid):
     last_date = datetime.datetime.now().strftime("%m.%d.%Y %H:%M:%S")
     await bot.send_message(chatid, "Lütfen bekleyin!\nBiraz zaman alacak!", reply_markup=start_kb)
-    file = r"d:\Prestige\Python\TelegramBot\Bat\update_prestige_cash.bat"
-    result = subprocess.Popen(file)
-    if result.wait() == 0:
-        sms = "%s\n\n**********banka**********\n" % last_date
-        print(sms, datetime.datetime.now())
-        sms += main_privatbank(chatid)
-        print(sms, datetime.datetime.now())
-        sms += "\n\n**********1C**********\n"
-        print(sms, datetime.datetime.now())
-        sms += main_one_c_cash_rest()
-        print(sms, datetime.datetime.now(), "\n kalan OFF")
-        return sms
+    # file = r"d:\Prestige\Python\TelegramBot\Bat\update_prestige_cash.bat"
+    # result = subprocess.Popen(file)
+    # if result.wait() == 0:
+    sms = "%s\n\n**********banka**********\n" % last_date
+    print(sms, datetime.datetime.now())
+    sms += main_privatbank(chatid)
+    print(sms, datetime.datetime.now())
+    # sms += "\n\n**********1C**********\n"
+    # print(sms, datetime.datetime.now())
+    # sms += main_one_c_cash_rest()
+    # print(sms, datetime.datetime.now(), "\n kalan OFF")
+    return sms
 
 
 @dp.message_handler()
 async def echo_message(message: types.Message):
-    await bot.send_message(message.from_user.id, message.text)
+    await bot.send_message(message.from_user.id, 'ERROR', reply_markup=start_kb)
 
 
 # Запуск процесса поллинга новых апдейтов

@@ -47,6 +47,7 @@ def add_to_database(chatid, username, text, timestamp):
                     result = cur.execute(query, odata)
 
                 conpg.commit()
+
     except Exception as err:
         conpg.rollback()
         sms = traceback.print_exc()
