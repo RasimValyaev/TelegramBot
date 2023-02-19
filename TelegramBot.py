@@ -36,12 +36,12 @@ bot = Bot(token=TELEGRAM_TOKEN)
 dp = Dispatcher(bot)
 
 start_kb = ReplyKeyboardMarkup(resize_keyboard=True, )
-start_kb.row('gider', 'kalan')
+start_kb.row('gider', 'banka')
 
 # Включаем логирование, чтобы не пропустить важные сообщения
 logging.basicConfig(level=logging.INFO)
 keyboard = InlineKeyboardMarkup()
-menu_1 = InlineKeyboardButton(text='kalan', callback_data="menu_1")
+menu_1 = InlineKeyboardButton(text='banka', callback_data="menu_1")
 menu_2 = InlineKeyboardButton(text='hareket', callback_data="menu_2")
 keyboard.add(menu_1, menu_2)
 
@@ -59,15 +59,12 @@ async def user_validate(message):
 
 async def user_name(message: Message):
     # get correct username
-    if len(message.full_name) == 0:
-        username = message.first_name + " " + message.last_name + " (" + message.username + ")"
-    else:
-        username = message.username
-
-    return username
+    return "first_name: " + message.first_name + "; last_name: " + message.last_name + \
+        "; full_name: " + message.full_name + "; username: " + message.username
 
 
 async def save_message(chatid, message_text, username, date, in_out: bool):
+    # in_out: True - message from user(input), False - message to user(output)
     if in_out:
         msg_text = "Musteriden: %s" % message_text
     else:
@@ -78,7 +75,7 @@ async def save_message(chatid, message_text, username, date, in_out: bool):
 
 
 async def send_me(chatid, sms, in_out: bool):
-    # in_out: True - message from user, False - message to user
+    # in_out: True - message from user(input), False - message to user(output)
     if in_out:
         sms += "musteriden\n%s\n%s" % (chatid, sms)
     else:
@@ -104,14 +101,14 @@ async def process_start_command(message: types.Message):
                         reply_markup=start_kb)
 
 
-@dp.message_handler(Text(equals=['kalan'], ignore_case=True))
+@dp.message_handler(Text(equals=['banka'], ignore_case=True))
 async def nav_cal_handler(message: Message):
     username = await user_name(message.chat)
     await save_message(message.chat.id, message.text, username, message.date, True)
     await send_me(message.chat.id, message.text, True)
 
     if await user_validate(message):
-        sms = await kalan(message.chat.id)
+        sms = await banka(message.chat.id)
     else:
         sms = "Вы не зарегистрированы в системе!"
 
@@ -119,7 +116,6 @@ async def nav_cal_handler(message: Message):
     await save_message(message.chat.id, sms, username, message.date, False)
     await bot.send_message(message.chat.id, sms, reply_markup=start_kb)
     await send_me(message.chat.id, sms, False)
-
 
 
 @dp.message_handler(Text(equals=['gider'], ignore_case=True))
@@ -130,11 +126,10 @@ async def simple_cal_handler(message: Message):
 
     if await user_validate(message):
         await message.answer("Gider tarihini lutfen secin: ",
-                                   reply_markup=await DialogCalendar().start_calendar())
+                             reply_markup=await DialogCalendar().start_calendar())
     else:
         sms = "Вы не зарегистрированы в системе!"
         await message.answer(sms, reply_markup=start_kb)
-
 
 
 @dp.callback_query_handler(dialog_cal_callback.filter())
@@ -146,7 +141,7 @@ async def process_dialog_calendar(callback_query: CallbackQuery, callback_data: 
         msg_text = callback_query.message.text
 
         if msg_text == 'Kasa tarihini lutfen secin:':
-            sms = await kalan(chatid, date)
+            sms = await banka(chatid, date)
         if msg_text == 'Gider tarihini lutfen secin:':
             sms = await gider(date)
 
@@ -160,7 +155,7 @@ async def process_dialog_calendar(callback_query: CallbackQuery, callback_data: 
         await send_me(chatid, sms, False)
 
 
-async def kalan(chatid):
+async def banka(chatid):
     last_date = datetime.datetime.now().strftime("%m.%d.%Y %H:%M:%S")
     await bot.send_message(chatid, "Lütfen bekleyin!\nBiraz zaman alacak!", reply_markup=start_kb)
     # file = r"d:\Prestige\Python\TelegramBot\Bat\update_prestige_cash.bat"
@@ -173,7 +168,7 @@ async def kalan(chatid):
     # sms += "\n\n**********1C**********\n"
     # print(sms, datetime.datetime.now())
     # sms += main_one_c_cash_rest()
-    # print(sms, datetime.datetime.now(), "\n kalan OFF")
+    # print(sms, datetime.datetime.now(), "\n banka OFF")
     return sms
 
 
