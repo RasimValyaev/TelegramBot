@@ -37,18 +37,23 @@ def get_rate(url):
                 item.find_all('div', attrs={'class': 'icons-point'})[0].find_all('a', href=True)[0]['href'].split(" ")[
                     1]
                 rate_raw = item.find_all('div', attrs={'class': 'Typography point-currency__rate cardHeadlineL align'})
+
                 if len(rate_raw) == 0:
                     continue
 
-                print(i, phone)
                 result = item.find_all('div', attrs={'class': 'Typography point-currency__rate cardHeadlineL align'})[
-                    0].text.replace(",", ".").split("/")
+                    0].text
+                result =result.replace(",", ".")
+                if "-- --" in result:
+                    result =result.replace("-- --",'0')
+
+                result =result.split("/")
                 kur_alis, kur_satis = map(float, result)
                 rate_day, _kur_time = item.find_all('div', attrs={'class': 'point-interactions'})[0].text.split(" ")
 
-                if rate_day.lower() == "сегодня":
-                    day = dt.date.today()
-                elif rate_day.lower() == "вчера":
+                day = dt.date.today()
+
+                if rate_day.lower() == "вчера":
                     day = dt.date.today() - timedelta(days=1)
 
                 kur_time = str(dt.datetime.strptime(str(day) + ' ' + _kur_time, '%Y-%m-%d %H:%M'))
