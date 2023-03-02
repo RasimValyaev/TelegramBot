@@ -53,8 +53,13 @@ async def user_validate(message):
 
 async def user_name(message: Message):
     # get correct username
-    result = "first_name: %s; last_name: %s; full_name: %s; username: %s" % (
-        message.first_name, message.last_name, message.full_name, message.username)
+    if len(message.full_name) != 0:
+        result = message.full_name
+    elif len(message.username) != 0:
+        result = message.username
+    else:
+        result = "%s; %s" % (message.first_name, message.last_name)
+
     return result
 
 
@@ -103,7 +108,7 @@ async def process_start_command(message: types.Message):
 async def nav_cal_handler(message: Message):
     username = await user_name(message.chat)
     await save_message(message.chat.id, message.text, username, message.date, True)
-    await send_me(message.chat.id, username,message.text, True)
+    await send_me(message.chat.id, username, message.text, True)
 
     if await user_validate(message):
         sms = await banka(message.chat.id)
