@@ -93,7 +93,7 @@ async def gider(date):
 
 async def default_ask(chatid):
     sms = "Only for registered users!\n\nТільки для зареєстрованих користувачів!"
-    await bot.send_message(chatid, sms, reply_markup=start_kb)
+    await bot.send_message(chatid, sms, reply_markup=start_kb_lite)
 
 
 @dp.message_handler(commands=['start'])
