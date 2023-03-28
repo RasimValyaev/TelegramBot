@@ -46,6 +46,7 @@ def get_rate(url):
                 result =result.replace(",", ".")
                 if "-- --" in result:
                     result =result.replace("-- --",'0')
+                    continue
 
                 result =result.split("/")
                 kur_alis, kur_satis = map(float, result)
