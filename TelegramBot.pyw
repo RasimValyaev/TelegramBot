@@ -224,6 +224,8 @@ async def echo_message(message: types.Message):
             amount = result_for_day[2]
             sms = "за день %s\nколичество: %s ед\nсумма: %s грн" % (date, quantity, amount)
             await bot.send_message(message.chat.id, sms, reply_markup=start_kb_lite)
+            await send_me(message.chat.id, username, sms, False)
+
         else:
             await default_ask(message.chat.id)
 
