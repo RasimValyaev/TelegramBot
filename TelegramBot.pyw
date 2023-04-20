@@ -5,6 +5,8 @@
 import os
 import sys
 
+from TAS.tas_authorize import main_tas
+
 scriptpath = r"D:\Prestige\Python\Config"
 sys.path.append(os.path.abspath(scriptpath))
 scriptpath = r"d:\Prestige\Python\Prestige"
@@ -112,7 +114,8 @@ async def nav_cal_handler(message: Message):
     await send_me(message.chat.id, username, message.text, True)
 
     if await user_validate(message):
-        sms = await banka(message.chat.id)
+        sms = await banka(message.chat.id) # PB
+        sms = sms + await main_tas()
         username = await user_name(message.chat)
         await save_message(message.chat.id, sms, username, message.date, False)
         await bot.send_message(message.chat.id, sms, reply_markup=start_kb)
