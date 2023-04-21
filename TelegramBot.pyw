@@ -5,18 +5,17 @@
 import os
 import sys
 
-from TAS.tas_authorize import main_tas
-
 scriptpath = r"D:\Prestige\Python\Config"
 sys.path.append(os.path.abspath(scriptpath))
 scriptpath = r"d:\Prestige\Python\Prestige"
 sys.path.append(os.path.abspath(scriptpath))
 
-from stickers import is_stickers
 import datetime
 import warnings
 import subprocess
 import asyncio
+from stickers import is_stickers
+from TAS.TasBank import main_get_balance_from_tas
 from aiogram.types import Message, CallbackQuery, ReplyKeyboardMarkup
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
@@ -115,7 +114,7 @@ async def nav_cal_handler(message: Message):
 
     if await user_validate(message):
         sms = await banka(message.chat.id) # PB
-        sms = sms + await main_tas()
+        sms = sms + await main_get_balance_from_tas()
         username = await user_name(message.chat)
         await save_message(message.chat.id, sms, username, message.date, False)
         await bot.send_message(message.chat.id, sms, reply_markup=start_kb)
