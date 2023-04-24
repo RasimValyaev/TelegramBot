@@ -12,16 +12,14 @@ sys.path.append(os.path.abspath(scriptpath))
 
 import datetime
 import warnings
-import subprocess
 import asyncio
 from stickers import is_stickers
 from TAS.TasBank import main_get_balance_from_tas
-from aiogram.types import Message, CallbackQuery, ReplyKeyboardMarkup
+from aiogram.types import Message,  ReplyKeyboardMarkup
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
-from aiogram_calendar import dialog_cal_callback, DialogCalendar
 from aiogram.dispatcher.filters import Text
-from OneC import main_one_c_cash_rest, get_cash_expenses
+from OneC import  get_cash_expenses
 from PrivatBank import main_privatbank
 from UserValidate import main_user_validate, add_to_database as save
 from configPrestige import TELEGRAM_TOKEN
@@ -37,7 +35,8 @@ bot = Bot(token=TELEGRAM_TOKEN)
 dp = Dispatcher(bot)
 
 start_kb = ReplyKeyboardMarkup(resize_keyboard=True, )
-start_kb.row('расходы', 'банк', 'курс')  # , 'остаток 1С')
+# start_kb.row('расходы', 'банк', 'курс')
+start_kb.row('банк', 'курс')
 start_kb_lite = ReplyKeyboardMarkup(resize_keyboard=True, )
 start_kb_lite.row('курс')
 
@@ -78,14 +77,16 @@ async def save_message(chatid, message_text, username, date, in_out: bool):
 
 async def send_me(chatid, username, sms, in_out: bool):
     # in_out: True - message from user(input), False - message to user(output)
+    data = (username, chatid, sms)
+    sms = "SMS\n%s\n%s\n\n%s" % data
     if in_out:
-        sms = "\nMusteriden\n%s\n%s" % (chatid, sms)
+        prefix = "IN "
     else:
-        sms = "\nMusteriye\n%s\n%s" % (chatid, sms)
-
+        prefix = "OUT "
+    sms = f"\n{prefix}{sms}"
     # send me a copy of the message sent
     if chatid != 490323168:
-        await bot.send_message(490323168, "message ellandi:\n%s\n%s" % (username, sms), reply_markup=start_kb)
+        await bot.send_message(490323168,sms, reply_markup=start_kb)
 
 
 async def gider(date):
@@ -113,25 +114,12 @@ async def nav_cal_handler(message: Message):
     await send_me(message.chat.id, username, message.text, True)
 
     if await user_validate(message):
-        sms = await banka(message.chat.id) # PB
-        sms = sms + await main_get_balance_from_tas()
+        sms = await banka(message.chat.id)  # PB
+        sms = sms + await main_get_balance_from_tas()  # TAS
         username = await user_name(message.chat)
         await save_message(message.chat.id, sms, username, message.date, False)
         await bot.send_message(message.chat.id, sms, reply_markup=start_kb)
         await send_me(message.chat.id, username, sms, False)
-    else:
-        await default_ask(message.chat.id)
-
-
-@dp.message_handler(Text(equals=['расходы'], ignore_case=True))
-async def simple_cal_handler(message: Message):
-    username = await user_name(message.chat)
-    await save_message(message.chat.id, message.text, username, message.date, True)
-    await send_me(message.chat.id, username, message.text, True)
-
-    if await user_validate(message):
-        await message.answer("Gider tarihini lutfen secin: ",
-                             reply_markup=await DialogCalendar().start_calendar())
     else:
         await default_ask(message.chat.id)
 
@@ -152,60 +140,11 @@ async def simple_cal_handler(message: Message):
     await send_me(message.chat.id, username, sms, False)
 
 
-@dp.message_handler(Text(equals=['остаток 1С'], ignore_case=True))
-async def simple_cal_handler(message: Message):
-    username = await user_name(message.chat)
-    await save_message(message.chat.id, message.text, username, message.date, True)
-    await send_me(message.chat.id, username, message.text, True)
-
-    if await user_validate(message):
-        await message.answer("tarihi lutfen secin: ",
-                             reply_markup=await DialogCalendar().start_calendar())
-    else:
-        await default_ask(message.chat.id)
-
-
-@dp.callback_query_handler(dialog_cal_callback.filter())
-async def process_dialog_calendar(callback_query: CallbackQuery, callback_data: dict):
-    selected, date = await DialogCalendar().process_selection(callback_query, callback_data)
-    if selected:
-        date = date.strftime("%d/%m/%Y")
-        chatid = callback_query.message.chat.id
-        msg_text = callback_query.message.text
-
-        if msg_text == 'tarihi lutfen secin:':
-            sms = await rest_cash_one_crest_cash_one_c(chatid)
-        if msg_text == 'Gider tarihini lutfen secin:':
-            sms = await gider(date)
-
-        sms = "***** %s *****\n%s\n" % (date, sms)
-
-        print("sms", sms)
-
-        username = await user_name(callback_query.message.chat)
-        await save_message(chatid, sms, username, date, False)
-        await bot.send_message(chatid, sms, reply_markup=start_kb)
-        await send_me(chatid, username, sms, False)
-
-
 async def banka(chatid):
     last_date = datetime.datetime.now().strftime("%m.%d.%Y %H:%M:%S")
     sms = "%s\n" % last_date
     sms += main_privatbank(chatid)
     print(sms, datetime.datetime.now())
-    return sms
-
-
-async def rest_cash_one_crest_cash_one_c(chatid):
-    await bot.send_message(chatid, "Lütfen bekleyin!\nBiraz zaman alacak!", reply_markup=start_kb)
-    file = r"d:\Prestige\Python\TelegramBot\Bat\update_prestige_cash.bat"
-    result = subprocess.Popen(file)
-    sms = ''
-    if result.wait() == 0:
-        sms = "\n\n**********1C**********\n"
-        print(sms, datetime.datetime.now())
-        sms += main_one_c_cash_rest()
-        print(sms, datetime.datetime.now(), "\n banka OFF")
     return sms
 
 

@@ -180,8 +180,6 @@ def firms_cycle_add_to_base(df):
         else:
             df_final = pd.concat([df_final, df_firm], ignore_index=True)
 
-        # send_request_transaction(pb_id, pb_token, firm_name)
-
     return df_final
 
 
