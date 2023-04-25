@@ -22,7 +22,7 @@ from aiogram.dispatcher.filters import Text
 from OneC import  get_cash_expenses
 from PrivatBank import main_privatbank
 from UserValidate import main_user_validate, add_to_database as save
-from configPrestige import TELEGRAM_TOKEN
+from configPrestige import TELEGRAM_TOKEN, AUTORIZATION_TAS
 from authorize import con_postgres_psycopg2
 from views_pg import main_create_views
 from CurrentRate import get_rate
@@ -155,8 +155,9 @@ async def echo_message(message: types.Message):
     await send_me(message.chat.id, username, message.text, False)
 
     result_for_day = await is_stickers(message)
-
-    if await user_validate(message) and result_for_day == []:
+    if await user_validate(message) and message.text.lower() == 'tas':
+        await bot.send_message(message.from_user.id, AUTORIZATION_TAS, reply_markup=start_kb)
+    elif await user_validate(message) and result_for_day == []:
         await bot.send_message(message.from_user.id, 'ERROR', reply_markup=start_kb)
     else:
         if result_for_day != []:
