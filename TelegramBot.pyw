@@ -152,7 +152,7 @@ async def banka(chatid):
 async def echo_message(message: types.Message):
     username = await user_name(message.chat)
     await save_message(message.chat.id, message.text, username, message.date, False)
-    await send_me(message.chat.id, username, message.text, False)
+    await send_me(message.chat.id, username, message.text, True)
 
     result_for_day = await is_stickers(message)
     if await user_validate(message) and message.text.lower() == 'tas':
