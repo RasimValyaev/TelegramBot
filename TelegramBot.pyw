@@ -14,7 +14,7 @@ import datetime
 import warnings
 import asyncio
 from stickers import is_stickers
-from TAS.TasBank import main_get_balance_from_tas
+from Bank.TAS.TasBank import main_get_balance_from_tas
 from aiogram.types import Message,  ReplyKeyboardMarkup
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
