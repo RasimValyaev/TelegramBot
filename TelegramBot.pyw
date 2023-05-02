@@ -174,7 +174,11 @@ async def echo_message(message: types.Message):
 
 # Запуск процесса поллинга новых апдейтов
 async def main():
-    await dp.start_polling(bot)
+    try:
+        await dp.start_polling(bot)
+    except Exception as e:
+        await send_me(490323168, "ERROR", e, True)
+        sys.exit(0)
 
 
 if __name__ == "__main__":
