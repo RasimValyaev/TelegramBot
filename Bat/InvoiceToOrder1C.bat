@@ -1,0 +1,1 @@
+d:\Prestige\Python\TelegramBot\Scripts\Scripts\python.exe "D:\Prestige\Python\Prestige\InvoiceToOrder1C\MainMenu.py"
