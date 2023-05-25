@@ -4,30 +4,28 @@
 # Не забывайте своевременно обновлять библиотеку командой: python.exe -m pip install aiogram -U
 import os
 import sys
+import datetime
+import warnings
+import asyncio
 
 scriptpath = r"D:\Prestige\Python\Config"
 sys.path.append(os.path.abspath(scriptpath))
 scriptpath = r"d:\Prestige\Python\Prestige"
 sys.path.append(os.path.abspath(scriptpath))
 
-import datetime
-import warnings
-import asyncio
+from async_Postgres import async_save_pg, get_result_one_column
 from stickers import is_stickers
 from Bank.TAS.TasBankBalance import main_get_balance_from_tas
-from aiogram.types import Message,  ReplyKeyboardMarkup
+from aiogram.types import Message, ReplyKeyboardMarkup
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.dispatcher.filters import Text
-from OneC import  get_cash_expenses
+from OneC import get_cash_expenses
 from PrivatBank import main_privatbank
-from UserValidate import main_user_validate, add_to_database as save
+from UserValidate import main_user_validate, save_to_database
 from configPrestige import TELEGRAM_TOKEN, AUTORIZATION_TAS
-from authorize import con_postgres_psycopg2
 from views_pg import main_create_views
 from CurrentRate import get_rate
-
-conpg = con_postgres_psycopg2()
 
 idmenu = 0
 warnings.filterwarnings('ignore')
@@ -35,21 +33,18 @@ bot = Bot(token=TELEGRAM_TOKEN)
 dp = Dispatcher(bot)
 
 start_kb = ReplyKeyboardMarkup(resize_keyboard=True, )
-# start_kb.row('расходы', 'банк', 'курс')
 start_kb.row('банк', 'курс')
 start_kb_lite = ReplyKeyboardMarkup(resize_keyboard=True, )
 start_kb_lite.row('курс')
 
 
 async def user_validate(message):
-    main_create_views()
-
+    # await main_create_views()
+    sql = "SELECT * FROM t_telegram_policy WHERE idchat = $1"
     # control, is this user registered in the database
-    df = main_user_validate(message.chat.id)
-    if len(df) == 0:
-        return False
-    else:
-        return True
+    # df = await main_user_validate(sql, "", message.chat.id)
+    result = await get_result_one_column(sql, "", message.chat.id)
+    return True if result else False
 
 
 async def user_name(message: Message):
@@ -72,7 +67,7 @@ async def save_message(chatid, message_text, username, date, in_out: bool):
         msg_text = "Musteriye: %s" % message_text
 
     # *** save to database message from telegam user
-    save(chatid, username, msg_text, date)
+    await save_to_database(chatid, username, msg_text, date)
 
 
 async def send_me(chatid, username, sms, in_out: bool):
@@ -86,12 +81,7 @@ async def send_me(chatid, username, sms, in_out: bool):
     sms = f"\n{prefix}{sms}"
     # send me a copy of the message sent
     if chatid != 490323168:
-        await bot.send_message(490323168,sms, reply_markup=start_kb)
-
-
-async def gider(date):
-    sms = get_cash_expenses(date)
-    return sms
+        await bot.send_message(490323168, sms, reply_markup=start_kb)
 
 
 async def default_ask(chatid):
@@ -176,6 +166,7 @@ async def echo_message(message: types.Message):
 async def main():
     try:
         await dp.start_polling(bot)
+
     except Exception as e:
         await send_me(490323168, "ERROR", e, True)
         sys.exit(0)
