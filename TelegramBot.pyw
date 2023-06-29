@@ -104,7 +104,7 @@ async def nav_cal_handler(message: Message):
     await send_me(message.chat.id, username, message.text, True)
 
     if await user_validate(message):
-        sms = await banka(message.chat.id)  # PB
+        sms = await pb_bank(message.chat.id)  # PB
         sms = sms + await main_get_balance_from_tas()  # TAS
         username = await user_name(message.chat)
         await save_message(message.chat.id, sms, username, message.date, False)
@@ -130,7 +130,7 @@ async def simple_cal_handler(message: Message):
     await send_me(message.chat.id, username, sms, False)
 
 
-async def banka(chatid):
+async def pb_bank(chatid):
     last_date = datetime.datetime.now().strftime("%m.%d.%Y %H:%M:%S")
     sms = "%s\n" % last_date
     sms += main_privatbank(chatid)
