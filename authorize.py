@@ -8,21 +8,21 @@ import sys
 from psycopg2 import IntegrityError
 from sqlalchemy import create_engine
 from error_log import send_sms, add_to_log
-from configPrestige import username, psw, hostname, port, basename, url_const, chatid_rasim, data_auth, schema
+from configPrestige import username, psw, hostname, port, basename, URL_CONST, chatid_rasim, data_auth, schema
 
 engine = create_engine('postgresql://%s:%s@%s:%s/%s' % (username, psw, hostname, port, basename))
 
 
 def url_count(document):
-    return url_const + document + "/$count"
+    return URL_CONST + document + "/$count"
 
 
 def url_details(document):
-    return url_const + document + "/?$top=%s&$skip=%s&$format=json"
+    return URL_CONST + document + "/?$top=%s&$skip=%s&$format=json"
 
 
 def url_accumulate(document):
-    return url_const + document + "/?$top=%s&$skip=%s&$format=json&$filter=Active eq true"
+    return URL_CONST + document + "/?$top=%s&$skip=%s&$format=json&$filter=Active eq true"
 
 
 def url_main(document):
