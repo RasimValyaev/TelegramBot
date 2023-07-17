@@ -13,18 +13,16 @@ sys.path.append(os.path.abspath(scriptpath))
 scriptpath = r"d:\Prestige\Python\Prestige"
 sys.path.append(os.path.abspath(scriptpath))
 
-from async_Postgres import async_save_pg, get_result_one_column
+from async_Postgres import get_result_one_column
 from stickers import is_stickers
 from Bank.TAS.TasBankBalance import main_get_balance_from_tas
 from aiogram.types import Message, ReplyKeyboardMarkup
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.dispatcher.filters import Text
-from OneC import get_cash_expenses
 from PrivatBank import main_privatbank
-from UserValidate import main_user_validate, save_to_database
+from UserValidate import save_to_database
 from configPrestige import TELEGRAM_TOKEN, AUTORIZATION_TAS
-from views_pg import main_create_views
 from CurrentRate import get_rate
 
 idmenu = 0
@@ -157,6 +155,14 @@ async def echo_message(message: types.Message):
             sms = "за день %s\nколичество: %s ед\nсумма: %s грн" % (date, quantity, amount)
             await bot.send_message(message.chat.id, sms, reply_markup=start_kb_lite)
             await send_me(message.chat.id, username, sms, False)
+
+            last_date = datetime.today()
+            first_date = datetime.strptime(date, '%d.%m.%Y')
+            days_between = abs(last_date - first_date).days
+            if days_between > 0:
+                sms = 'Проверьте правильность введенной даты.\nИнтервал составляет %s дней' % days_between
+                await bot.send_message(message.chat.id, sms, reply_markup=start_kb_lite)
+                await send_me(message.chat.id, username, sms, False)
 
         else:
             await default_ask(message.chat.id)
