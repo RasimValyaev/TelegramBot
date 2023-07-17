@@ -8,7 +8,7 @@ import sys
 from psycopg2 import IntegrityError
 from sqlalchemy import create_engine
 from error_log import send_sms, add_to_log
-from configPrestige import username, psw, hostname, port, basename, URL_CONST, chatid_rasim, data_auth, schema
+from configPrestige import username, psw, hostname, port, basename, URL_CONST, chatid_rasim, DATA_AUTH, schema
 
 engine = create_engine('postgresql://%s:%s@%s:%s/%s' % (username, psw, hostname, port, basename))
 
@@ -55,7 +55,7 @@ def send_file(doc, chat_id=chatid_rasim, sms=''):
 def get_response(url):
     result = ''
     try:
-        response = requests.get(url, auth=data_auth)
+        response = requests.get(url, auth=DATA_AUTH)
         if (response.status_code < 200) \
                 or (response.status_code >= 300):
             sms = "ERROR url: %s. %s" % (url, response.json()['odata.error']['message']['value'])
@@ -336,15 +336,15 @@ def send_request(**kwargs):
             if 're_posted' not in kwargs:
                 data_json = kwargs['data_json']
 
-            return requests.post(url, headers=header, json=data_json, auth=data_auth)
+            return requests.post(url, headers=header, json=data_json, auth=DATA_AUTH)
 
         elif method == 'PATCH':
             if 're_posted' not in kwargs:
                 data_json = kwargs['data_json']
-            return requests.patch(url, headers=header, json=data_json, auth=data_auth)
+            return requests.patch(url, headers=header, json=data_json, auth=DATA_AUTH)
 
         elif method == 'GET':
-            response = requests.get(url, auth=data_auth).json()['value']
+            response = requests.get(url, auth=DATA_AUTH).json()['value']
 
             if len(response) > 0:
                 response = response[0].get(list(response[0])[0])
@@ -374,7 +374,7 @@ def get_result_json_and_table(url, table_name):
                                   "&$inlinecount=allpages"
                                   "&$select=**&$top=1"
                                   "&$filter=Posted eq true and ОтражатьВУправленческомУчете eq true",
-                            auth=data_auth)
+                            auth=DATA_AUTH)
     if response.status_code == 200:
         count = int(response.json()['odata.count'])
         intable = int(get_result_one_column("SELECT count(*) FROM public.%s" % table_name, con_postgres_psycopg2()))
