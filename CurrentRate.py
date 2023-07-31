@@ -16,10 +16,10 @@ from error_log import add_to_log
 def get_rate(url):
     # парсим страницу продаж usd
     try:
-        col = ['kur_alis', 'kur_satis', 'kur_time']
+        col = ['rate_buying', 'rate_selling', 'rate_time']
         df = pd.DataFrame(columns=col)
         df_current = pd.DataFrame(columns=col)
-        kur_time = None
+        rate_time = None
 
         r = requests.get(url)  # отправляем HTTP запрос и получаем результат
         soup = BeautifulSoup(r.text, 'html.parser')
@@ -49,45 +49,45 @@ def get_rate(url):
                     continue
 
                 result =result.split("/")
-                kur_alis, kur_satis = map(float, result)
-                rate_day, _kur_time = item.find_all('div', attrs={'class': 'point-interactions'})[0].text.split(" ")
+                rate_buying, rate_selling = map(float, result)
+                rate_day, _rate_time = item.find_all('div', attrs={'class': 'point-interactions'})[0].text.split(" ")
 
                 day = dt.date.today()
 
                 if rate_day.lower() == "вчера":
                     day = dt.date.today() - timedelta(days=1)
 
-                kur_time = str(dt.datetime.strptime(str(day) + ' ' + _kur_time, '%Y-%m-%d %H:%M'))
-                kur_time = dt.datetime.strptime(kur_time, '%Y-%m-%d %H:%M:%S')
+                rate_time = str(dt.datetime.strptime(str(day) + ' ' + _rate_time, '%Y-%m-%d %H:%M'))
+                rate_time = dt.datetime.strptime(rate_time, '%Y-%m-%d %H:%M:%S')
 
-                df_current = pd.DataFrame({'kur_alis': [kur_alis], 'kur_satis': [kur_satis], 'kur_time': [kur_time]})
+                df_current = pd.DataFrame({'rate_buying': [rate_buying], 'rate_selling': [rate_selling], 'rate_time': [rate_time]})
                 df = pd.concat([df, df_current])
 
             except Exception as e:
                 msj = "ParsingSite:dfParsinKur: %s" % e
                 add_to_log(msj)
 
-        if kur_time is not None:
-            df = df.sort_values('kur_time', ascending=True).tail(5).sort_values('kur_time', ascending=False)
+        if rate_time is not None:
+            df = df.sort_values('rate_time', ascending=True).tail(5).sort_values('rate_time', ascending=False)
         else:
             pass
 
         max_time = 0
         if len(df) > 0:
-            avg_kur_alis = float("%.2f" % df['kur_alis'].head(5).mean())  # средний курс
-            max_kur_alis = float("%.2f" % df['kur_alis'].head(5).max())  # самый высокий курс
-            avg_kur_satis = float("%.2f" % df['kur_satis'].head(5).mean())  # средний курс
-            max_kur_satis = float("%.2f" % df['kur_satis'].head(5).max())  # самый высокий курс
+            avg_rate_buying = float("%.2f" % df['rate_buying'].head(5).mean())  # средний курс
+            max_rate_buying = float("%.2f" % df['rate_buying'].head(5).max())  # самый высокий курс
+            avg_rate_selling = float("%.2f" % df['rate_selling'].head(5).mean())  # средний курс
+            max_rate_selling = float("%.2f" % df['rate_selling'].head(5).max())  # самый высокий курс
 
-            max_time = (df['kur_time']).max()
+            max_time = (df['rate_time']).max()
 
-            print('средний/максимальный курс последних 5 значений: ', avg_kur_alis, avg_kur_satis, max_time)
+            print('средний/максимальный курс последних 5 значений: ', avg_rate_buying, avg_rate_selling, max_time)
 
         else:
-            avg_kur_alis = 0
-            avg_kur_satis = 0
+            avg_rate_buying = 0
+            avg_rate_selling = 0
 
-        return avg_kur_alis, avg_kur_satis, max_time
+        return avg_rate_buying, avg_rate_selling, max_time
 
 
     except Exception as e:
@@ -96,5 +96,5 @@ def get_rate(url):
 
 
 if __name__ == '__main__':
-    kur_alis, kur_satis, time = get_rate("https://minfin.com.ua/currency/auction/usd/buy/kiev/?order=newest")
-    print(kur_alis, kur_satis)
+    rate_buying, rate_selling, time = get_rate("https://minfin.com.ua/currency/auction/usd/buy/kiev/?order=newest")
+    print(rate_buying, rate_selling)
