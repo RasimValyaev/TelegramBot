@@ -1,1 +1,0 @@
-d:\Prestige\Python\TelegramBot\Scripts\Scripts\pythonw.exe -c "from t_one_sale import async_run_sql_pg; await async_run_sql_pg('SomeInput')"
